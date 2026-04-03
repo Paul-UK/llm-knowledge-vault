@@ -1,7 +1,15 @@
 .DS_Store
 __pycache__/
 *.pyc
+
+# Secrets / machine-local env (copy from Example.env)
+.env
+.env.*
+
 .venv/
 wiki/assets/plots/*.png
 wiki/assets/plots/*.pdf
 !wiki/assets/plots/.gitkeep
+
+# Obsidian app metadata (optional nested vaults under raw/)
+**/.obsidian/

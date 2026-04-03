@@ -78,7 +78,10 @@ There is **no embedding/RAG service** in this POC: at modest size, search plus a
 | `wiki/Concepts/` | Topic articles; backlink to `Sources/` and other concepts. |
 | `wiki/Outputs/` | Generated Q&A, slides (e.g. Marp), exports. Subfolders by type are fine. |
 | `wiki/assets/plots/` | Default place for matplotlib (or other) figures referenced from wiki notes. |
-| `tools/vault_cli.py` | `stats`, `search`, `lint` — no third-party dependencies. |
+| `tools/vault_cli.py` | `stats`, `search` (incl. `--files-only`), `list`, `index-gap`, `lint` — stdlib only. |
+| `tools/raw_bundle.py` | Concatenate `raw/**/*.md` into one stdout blob for LLM context. |
+| `Makefile` | Shortcuts: `make lint`, `make bundle`, `make index-gap`, etc. |
+| `.cursor/rules/vault.mdc` | Cursor: always-on hints for this repo (see also `AGENTS.md`). |
 | `tools/ollama_run.py` | Optional: chat via official [`ollama` PyPI](https://pypi.org/project/ollama/) package (local HTTP API); `--web-tools` for search+fetch loop. |
 | `tools/ollama_web.py` | Optional: `search` / `fetch` against [Ollama web APIs](https://ollama.com/blog/web-search) (needs `OLLAMA_API_KEY`). |
 | `requirements-ollama.txt` | Optional dependency pin for `ollama_run.py`. |
@@ -105,14 +108,31 @@ Run commands from the **repository root** (`llm-knowledge-vault`).
 # File counts and rough word totals for wiki/ and raw/
 python3 tools/vault_cli.py stats
 
-# Case-insInsensitive substring search over .md files (prints path:line:excerpt)
+# List every .md path (inventory for agents)
+python3 tools/vault_cli.py list --scope raw
+python3 tools/vault_cli.py list --scope wiki
+
+# raw/ files whose path is not mentioned in wiki/meta/source-index.md (exit 1 if any)
+python3 tools/vault_cli.py index-gap
+
+# Case-insensitive search (path:line:excerpt), or unique files only
 python3 tools/vault_cli.py search "your terms"
 python3 tools/vault_cli.py search "your terms" --scope wiki
 python3 tools/vault_cli.py search "your terms" --scope raw
 python3 tools/vault_cli.py search "your terms" --max-hits 50
+python3 tools/vault_cli.py search "your terms" --scope raw --files-only
+
+# Bundle all raw notes into one text block (pipe to a file or into ollama -u)
+python3 tools/raw_bundle.py
+python3 tools/raw_bundle.py 'raw/LLM trading/*.md'
 
 # List broken [[wikilinks]] under wiki/ (exit 1 if any)
 python3 tools/vault_cli.py lint
+
+# Optional shortcuts
+make help
+make bundle
+make index-gap
 ```
 
 ### How `lint` resolves wikilinks

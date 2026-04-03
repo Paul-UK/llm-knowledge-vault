@@ -1,0 +1,7 @@
+.DS_Store
+__pycache__/
+*.pyc
+.venv/
+wiki/assets/plots/*.png
+wiki/assets/plots/*.pdf
+!wiki/assets/plots/.gitkeep

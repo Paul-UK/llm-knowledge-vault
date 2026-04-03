@@ -1,0 +1,42 @@
+%% LLM knowledge vault — high-level flow
+%% View: GitHub renders the embedded copy in README.md; edit here or in README in sync.
+%% Try: https://mermaid.live/
+
+flowchart TB
+  subgraph ingest["Ingest"]
+    H[Human]
+    R[("raw/ · sources")]
+    H -->|"clips, exports, notes"| R
+  end
+
+  subgraph compile["Compile"]
+    P["prompts/ · tasks"]
+    L1["LLM · compile pass"]
+    R --> L1
+    P --> L1
+    W[("wiki/ · articles, hubs, index")]
+    L1 -->|"writes & maintains"| W
+  end
+
+  subgraph explore["Explore & query"]
+    O["Obsidian"]
+    C["vault_cli · search, stats, lint"]
+    W --> O
+    H --> O
+    R --> C
+    W --> C
+    L2["LLM · Q&A"]
+    C -->|"cited paths & excerpts"| L2
+    R -->|"context"| L2
+    W -->|"context"| L2
+    P --> L2
+    OUT["wiki/Outputs/"]
+    L2 -->|"answers, slides, plots"| OUT
+    OUT --> W
+  end
+
+  subgraph optional["Optional backend"]
+    OM["Ollama CLI or Python"]
+  end
+  OM -.->|"local API"| L1
+  OM -.->|"local API"| L2

@@ -1,5 +1,7 @@
 # LLM knowledge vault (POC)
 
+**Repository:** [github.com/Paul-UK/llm-knowledge-vault](https://github.com/Paul-UK/llm-knowledge-vault)
+
 A **personal research vault** where you keep sources under `raw/` and let an LLM maintain a linked **wiki** (`wiki/*.md`) for summaries, concepts, and answers. The human edits `raw/` (clips, exports, notes); the model updates `wiki/`, indices, and outputs. [Obsidian](https://obsidian.md/) is a good viewer for both trees.
 
 This repo is a **minimal scaffold**: folder contract, a stdlib-only vault CLI, optional **[Ollama](https://ollama.com/) Python client** (`pip install -r requirements-ollama.txt`), and copy-paste prompts under `prompts/`.

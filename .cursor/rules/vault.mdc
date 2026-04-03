@@ -1,0 +1,12 @@
+---
+description: LLM knowledge vault — repo conventions and agent workflow
+alwaysApply: true
+---
+
+# LLM knowledge vault
+
+- **Repo root** is the vault root (folders `raw/`, `wiki/`, `tools/`). Run commands from here (`cd` first) so paths resolve correctly.
+- Read **`AGENTS.md`** for layout, wikilinks, and the **compile checklist**. Prefer **`make help`** or `python3 tools/vault_cli.py --help` over guessing commands.
+- After editing **`wiki/`**, run **`python3 tools/vault_cli.py lint`** (or `make lint`).
+- **`tools/ollama_run.py`** only **prints** model text to stdout; it does **not** write `wiki/` or `raw/`. To apply compiles, **edit files** in the editor or use agent file tools.
+- **`raw/`** is research input; **`wiki/`** is compiled output. Use **`python3 tools/raw_bundle.py`** to build one context blob from `raw/`, or **`python3 tools/vault_cli.py index-gap`** to see `raw/` files not yet mentioned in `wiki/meta/source-index.md`.

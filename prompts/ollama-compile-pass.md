@@ -16,3 +16,5 @@ You are maintaining a personal knowledge vault (Obsidian-friendly markdown).
 **Output format:** List files you changed, then stop. Use wikilinks `[[path/without/wiki/prefix]]` relative to `wiki/` root (e.g. `[[Concepts/foo]]`, `[[Sources/bar]]`).
 
 **Tooling hint:** Run `python tools/vault_cli.py lint` after edits and fix broken `[[links]]`.
+
+**Optional web seed:** If the user pasted search/fetch output or asked for current events, treat it like any other source under `raw/` (cite URL in frontmatter or body) and run the same compile steps.

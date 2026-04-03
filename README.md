@@ -79,8 +79,10 @@ There is **no embedding/RAG service** in this POC: at modest size, search plus a
 | `wiki/Outputs/` | Generated Q&A, slides (e.g. Marp), exports. Subfolders by type are fine. |
 | `wiki/assets/plots/` | Default place for matplotlib (or other) figures referenced from wiki notes. |
 | `tools/vault_cli.py` | `stats`, `search`, `lint` — no third-party dependencies. |
-| `tools/ollama_run.py` | Optional: chat via official [`ollama` PyPI](https://pypi.org/project/ollama/) package (local HTTP API). |
+| `tools/ollama_run.py` | Optional: chat via official [`ollama` PyPI](https://pypi.org/project/ollama/) package (local HTTP API); `--web-tools` for search+fetch loop. |
+| `tools/ollama_web.py` | Optional: `search` / `fetch` against [Ollama web APIs](https://ollama.com/blog/web-search) (needs `OLLAMA_API_KEY`). |
 | `requirements-ollama.txt` | Optional dependency pin for `ollama_run.py`. |
+| `Example.env` | Template for `OLLAMA_API_KEY` and related vars; copy to `.env` (ignored). |
 | `prompts/` | Starter system/user instructions for compile and Q&A passes. |
 | `AGENTS.md` | Short rules you can give an agent so it respects the same contract. |
 | `diagrams/vault-overview.mmd` | Mermaid source for the overview chart (also embedded above). |
@@ -163,10 +165,37 @@ python3 tools/ollama_run.py --stream -p prompts/ollama-qa.md -u "Your question .
 
 **`OLLAMA_MODEL`** sets the default model when `-m` is omitted (otherwise `llama3.2`). **`OLLAMA_HOST`** points the client at a remote Ollama instance if needed (see upstream docs).
 
+### Web search & fetch (Ollama cloud)
+
+Ollama exposes **[web search and URL fetch](https://ollama.com/blog/web-search)** over HTTPS (not your local `ollama serve`). That lets a **local** chat model pull in fresh pages when you register tools and supply an API key. Free tier applies for individuals; see the post for limits and signup.
+
+1. Create an API key in your Ollama account. Copy **`Example.env`** to **`.env`**, set **`OLLAMA_API_KEY`**, then load it (e.g. `set -a && source .env && set +a` in bash/zsh). **`.env` is gitignored**; only the example file is committed.
+2. **Direct CLI** — grab snippets to paste into `raw/` or into a compile prompt:
+
+```bash
+python3 tools/ollama_web.py search "latest Fed rate decision summary"
+python3 tools/ollama_web.py fetch "https://example.com/article"
+python3 tools/ollama_web.py search "query" --json   # machine-readable
+```
+
+3. **Agentic chat** — model chooses when to call tools (use a tool-capable model such as `qwen3` or `gpt-oss` per Ollama’s docs):
+
+```bash
+python3 tools/ollama_run.py --web-tools -v -m qwen3:4b \
+  -p prompts/ollama-qa.md \
+  -u "What are credible sources saying about X this week? Cite URLs."
+
+# Optional: --think for models that support extended reasoning
+python3 tools/ollama_run.py --web-tools --think -m qwen3:4b -u "Research Y and summarize."
+```
+
+Long tool payloads are truncated; set **`OLLAMA_VAULT_TOOL_CHARS`** (default `12000`) if you need larger chunks. Prefer **~32k+ context** for heavy search loops, as Ollama recommends.
+
 ---
 
 ## Design notes
 
+- **Tools, not a monolith** — `tools/*.py` are plain CLIs an agent can **invoke via shell** (search, lint, Ollama, web). No service to babysit; capabilities stay composable. See **`AGENTS.md`** for the agent-facing playbook.
 - **Raw vs wiki** keeps provenance obvious and lets you re-run compilation if prompts or models change.
 - **Source index + hubs** reduce the need to grep the whole tree blindly; encourage the LLM to keep them current.
 - **Outputs under `wiki/Outputs/`** make answers first-class content you can link from concept pages later.

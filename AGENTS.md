@@ -2,6 +2,42 @@
 
 You maintain this vault. The human rarely edits `wiki/` by hand.
 
+## Agent playbook (call tools yourself)
+
+This repo is built around **small CLIs**, not a bespoke server. **You are expected to run them** from the repository root when they help—using your terminal / run_command capability—instead of asking the user to copy-paste output.
+
+
+| Tool | When to use it |
+|------|----------------|
+| `python3 tools/vault_cli.py search "…"` | Before wide reads: find which `raw/` / `wiki/` files mention a topic. |
+| `python3 tools/vault_cli.py stats` | Quick sense of vault size. |
+| `python3 tools/vault_cli.py lint` | After you edit `wiki/` — fix broken `[[wikilinks]]`. |
+| `.venv/bin/python3 tools/ollama_web.py search` / `fetch` | Web snippets (needs venv + `ollama` + `OLLAMA_API_KEY` for cloud APIs). |
+| `.venv/bin/python3 tools/ollama_run.py` | Local model chat; add `--web-tools` when the model should search/fetch in a loop. |
+
+The **vault files are the durable state**; tools are **cheap, repeatable probes**. Prefer invoking a tool over inventing paths or “guessing” what’s in the tree.
+
+### Runtime: cwd, `python` vs `python3`, and venv (avoid silent mistakes)
+
+1. **Working directory** — Commands assume the **repository root** (the directory that contains `tools/`, `wiki/`, and `raw/`). From somewhere else you may get **`can't open file 'tools/vault_cli.py'`** or tools reading the **wrong tree** because `vault_cli.py` resolves paths relative to the repo root. **Always `cd` to that root first.**
+
+2. **`python` vs `python3`** — Many systems only ship `python3`; `python` may be missing or a different version. If **`python` is not found**, rerun the same line with **`python3`**.
+
+3. **`vault_cli.py` (stats / search / lint)** — **Stdlib only**; no venv required. Example: `python3 tools/vault_cli.py stats`.
+
+4. **`ollama_run.py` and `ollama_web.py`** — Need the **`ollama`** package installed for the interpreter you use. **Wrong interpreter → `ModuleNotFoundError: No module named 'ollama'`** (or confusion if `python` points at an env that isn’t the one you `pip install`’d into).
+   - **Recommended (no `activate` needed):**  
+     `.venv/bin/python3 tools/ollama_run.py …`  
+     `.venv/bin/python3 tools/ollama_web.py …`
+   - **Alternative:** `source .venv/bin/activate` then `python3 tools/ollama_run.py …`
+   - **One-time setup:** `python3 -m venv .venv && .venv/bin/pip install -r requirements-ollama.txt`
+
+5. **Sanity checks before relying on output:**
+   - `python3 tools/vault_cli.py stats` — must print `wiki:` / `raw:` counts (confirms cwd + Python).
+   - `.venv/bin/python3 -c "import ollama"` — must exit **0** before using `ollama_run` / `ollama_web`.
+
+6. **`OLLAMA_API_KEY`** — For `ollama_web` / `ollama_run --web-tools`, the variable must be set in the **same shell** as the command (see `Example.env`). Missing key produces an **explicit** error about authorization / Bearer, not empty success.
+
 ## Layout
 
 - `raw/` — Source material only (clips, notes, exports). Do not delete without replacing provenance elsewhere.
@@ -16,16 +52,21 @@ You maintain this vault. The human rarely edits `wiki/` by hand.
 - After substantive edits, refresh `wiki/_index.md` hubs if navigation broke.
 - Outputs must cite paths under `wiki/` or `raw/` they used.
 
-## CLI (run from repo root)
+## CLI reference (run from repo root)
 
 ```bash
-python tools/vault_cli.py stats
-python tools/vault_cli.py search "query words"
-python tools/vault_cli.py lint
+python3 tools/vault_cli.py stats
+python3 tools/vault_cli.py search "query words"
+python3 tools/vault_cli.py lint
 ```
 
-Optional — local Ollama via Python (`pip install -r requirements-ollama.txt`):
+Optional — Ollama helpers (use **`.venv/bin/python3`** if you created `.venv` per Runtime §4):
 
 ```bash
-python tools/ollama_run.py -m llama3.2 -p prompts/ollama-compile-pass.md -u "<task>"
+.venv/bin/python3 tools/ollama_run.py -m llama3.2 -p prompts/ollama-compile-pass.md -u "Your concrete instruction."
+.venv/bin/python3 tools/ollama_run.py --web-tools -m qwen3:4b -p prompts/ollama-qa.md -u "Research question with citations."
+.venv/bin/python3 tools/ollama_web.py search "…"
+.venv/bin/python3 tools/ollama_web.py fetch "https://…"
 ```
+
+**Web APIs:** load `OLLAMA_API_KEY` (see `Example.env`). Docs: [Ollama web search](https://ollama.com/blog/web-search).
